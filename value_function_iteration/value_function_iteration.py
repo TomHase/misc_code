@@ -12,8 +12,9 @@ http://www3.nd.edu/~esims1/val_fun_iter_sp17.pdf
 import numpy as np
 import time
 from scipy.optimize import fminbound
+from scipy import interpolate
 
-def value_function_iteration(grid, tolerance, v0, alpha, beta, sigma, delta, bellman, grid_min, grid_max):
+def value_function_iteration(grid, tolerance, v0, alpha, beta, sigma, delta, bellman, grid_min, grid_max, A_dist, P):
     """
     Inputs:
     -----------
@@ -49,27 +50,31 @@ def value_function_iteration(grid, tolerance, v0, alpha, beta, sigma, delta, bel
     start = time.time()
 
     while inf_norm > tolerance:
-        
+        #from IPython.core.debugger import Tracer; Tracer()() 
+
         # initialize array for new value function
         v1=np.empty_like(v)            
         
         # intrapolate the value function
-        v_fn = lambda x: np.interp(x,grid,v)
-        
-        # loop over the grid
-        for i, k in enumerate(grid):
-            
-            # bellman equation
-            bellman1 = lambda kp: bellman(kp, k, v_fn, alpha, beta, sigma, delta) 
+        v_fn = interpolate.interp1d(grid,v.T)       
 
-            # optimization with bounds kmin and kmax 
-            k_star = fminbound(bellman1, grid_min, grid_max)                      
+        # loop of possible values for A
+        for j, A in enumerate(A_dist):
+
+            # loop over the grid for capital
+            for i, k in enumerate(grid):
             
-            # value of policy function at gridpoint i
-            policy[i] = k_star
+                # bellman equation
+                bellman1 = lambda kp: bellman(kp, k, v_fn, alpha, beta, sigma, delta, A, P[j,:]) 
+
+                # optimization with bounds kmin and kmax 
+                k_star = fminbound(bellman1, grid_min, grid_max)                      
             
-            # value of value function at gridpoind i
-            v1[i] = - bellman1(k_star) 
+                # value of policy function at gridpoint i
+                policy[i,j] = k_star
+            
+                # value of value function at gridpoind i
+                v1[i,j] = - bellman1(k_star) 
             
         # check for convergence
         inf_norm = np.linalg.norm(v1-v, np.inf)        
