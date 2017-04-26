@@ -1,5 +1,9 @@
 """
-Filename: nk_model.py
+Filename: linear_model.py
+
+author: Thomas Hasenagl
+email: thomas.hasenzagl@gmail.com
+date: April 3, 2017
 """
 
 import sympy as sp
@@ -10,9 +14,6 @@ class linear_model:
     """
     Solves a linear rational expectations model and produces IRFs
 
-    author: Thomas Hasenagl
-    email: thomas.hasenzagl@gmail.com
-    date: April 3, 2017
     """
 
     def __init__(self, params, variables, system):
