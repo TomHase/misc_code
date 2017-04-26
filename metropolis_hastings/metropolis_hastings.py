@@ -21,7 +21,7 @@ def metropolis_hastings(init, ndraws, burnin, proposal, target, y, x):
     burnin: float
         number of burnin draws
     proposal: function
-        log-pdf of the proposal density g(x)
+        pdf of the proposal density g(x)
     target: function
         log-pdf of the target density P(x)
     """
