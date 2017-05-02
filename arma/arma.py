@@ -1,14 +1,15 @@
 """
 Filename: arma.py
 author: Thomas Hasenzagl
+email: thomas.hasenzagl@gmail.com
 date: April 26, 2017
 """
 
 class arma:
 
-    def __self__(x):
+    def __init__(p,q,y):
         """
-        Parameters
+        Inputs: 
         -------------
         x: numpy array
            data
