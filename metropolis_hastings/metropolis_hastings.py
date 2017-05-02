@@ -52,7 +52,7 @@ def metropolis_hastings(init, ndraws, burnin, proposal, target, y, x):
             chain[i,:]=chain[i-1,:]
         
         if i%1000 == 0:
-            print("Iteration {} with posterior likelihood {}".format(i,target(chain[i,:], y, x)))
+            print("Iteration {} with log-posterior {}".format(i,target(chain[i,:], y, x)))
 
         P=Pp
 
