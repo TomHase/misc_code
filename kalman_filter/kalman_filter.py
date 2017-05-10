@@ -41,7 +41,7 @@ class kalman_filter:
         Predict the error covariance of the state at time t using the error covariance at time t-1.
         """
 
-        # Predicted state: x_{t|t-1} = F * x_{t-1|t-1} + B * u_{t}
+        # Predicted state: x_{t|t-1} = F * x_{t-1|t-1}
         xp = np.dot(self.F,xm) 
 
         # Predicted Covariance: P_{t|t-1} = F * P_{k-1|k-1} * F' + Q
@@ -54,7 +54,6 @@ class kalman_filter:
         Update the state and error covariance incorporating the observation y_{t} 
         """
         
-        # from IPython.core.debugger import Tracer; Tracer()()
         # Innovations: e_{t} = y_{t} - H * x_{t|t-1} 
         e = y - np.dot(self.H,xp)
 
