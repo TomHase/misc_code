@@ -199,11 +199,14 @@ class arima:
         
         return e, sigma_yy, alphau, Pu 
     
-    def objective(self, beta):
+    def objective(self, beta, save_output=False):
         """
         Objecive function to be maximized 
         """
         
+        # initialize for storage
+        epsilon = np.empty_like(self.y)
+
         # state space
         T, R, Z, Q = self.state_space(beta)
 
@@ -225,16 +228,22 @@ class arima:
             sum1 += np.log(sigma_yy)
             sum2 += e**2 / sigma_yy
            
+            # epsilon
+            epsilon[t] = e
+
             # Update alpha and P for next iteration
             alpham = alphau
             Pm = Pu
 
         # calculate log likelihood and error variance v^2
         L, v2 = self.log_likelihood(sum1, sum2)
+        
+        if save_output == False:
+            return L
+        elif save_output == True:
+            return L, epsilon, v2    
 
-        return L
-    
-    def mle(self):
+    def __call__(self):
         """
         Maximize the objective function and get the coefficients
         """
@@ -245,6 +254,9 @@ class arima:
         # maximize the likelihood
         beta_star = fmin_bfgs(self.objective, beta0, disp=0)
        
+        # final run of objective function
+        L, epsilon, v2 = self.objective(beta_star, save_output=True)
+
         # AR and MA coefficients
         if self.p == 0:
             phi = np.array([])
@@ -257,8 +269,8 @@ class arima:
             theta = beta_star
         else:
             theta = beta_star[self.p:self.p+self.q]
-
-        return phi, theta 
+        
+        return phi, theta, -L, epsilon, v2 
 
     def bic(self, sigma2, p, t):
         """
