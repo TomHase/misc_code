@@ -36,6 +36,9 @@ class arima:
             self.y = np.diff(y, n=self.d) 
 
         self.t = len(self.y)
+        
+        # model estimation
+        self.beta, self.phi, self.theta, self.L, self.epsilon, self.v2, self.alpha_last, self.P_last = self.__call__()
 
     def initialize(self):
         """
@@ -219,8 +222,7 @@ class arima:
         sum2 = 0
 
         for t in range(self.t):
-            #from IPython.core.debugger import Tracer; Tracer()()
-            
+                        
             # Run Kalma filter
             e, sigma_yy, alphau, Pu = self.kalman_filter(T, R, Z, Q, alpham, Pm, self.y[t])
             
@@ -241,7 +243,7 @@ class arima:
         if save_output == False:
             return L
         elif save_output == True:
-            return L, epsilon, v2    
+             return L, epsilon, v2, alphau, Pu    
 
     def __call__(self):
         """
@@ -253,9 +255,9 @@ class arima:
         
         # maximize the likelihood
         beta_star = fmin_bfgs(self.objective, beta0, disp=0)
-       
+
         # final run of objective function
-        L, epsilon, v2 = self.objective(beta_star, save_output=True)
+        L, epsilon, v2, alpha_last, P_last = self.objective(beta_star, save_output=True)
 
         # AR and MA coefficients
         if self.p == 0:
@@ -270,16 +272,52 @@ class arima:
         else:
             theta = beta_star[self.p:self.p+self.q]
         
-        return phi, theta, -L, epsilon, v2 
+        return beta_star, phi, theta, -L, epsilon, v2, alpha_last, P_last 
+    
+    def forecast(self,H):
+        """
+        Forecast ahead for periods h=1,...,H 
 
-    def bic(self, sigma2, p, t):
+        alpha_{T+h|T} = T * alpha{T+h-1|T}
+        P_{T+h|T} = T * P_{T+h-1|T} * T' + Q  
+        """
+
+        # State Space with 
+        T, R, Z, Q = self.state_space(self.beta)
+
+        # initializing for storage
+        fcst = np.empty([H,])
+        mse = np.empty([H,])
+        
+        # forecasts
+        for h in range(H):
+            if h == 0:
+                alpham = self.alpha_last
+                Pm = self.P_last
+            else:
+                alpham = alphap
+                Pm=Pp
+               
+            # forecast
+            alphap = np.dot(T,alpham)
+            fcst[h] = np.dot(Z.T,alphap)
+
+            # Mean squared error
+            Pp = np.dot(np.dot(T,Pm),T.T) + Q
+            mse[h] = self.v2 * Pp[0,0]
+        
+        return fcst, mse 
+
+    def bic(self, sigma2=None, p=None, t=None):
         """
         Compute Bayesian information criterion for lag choice
         """
+        if sigma2 == None and p == None and t == None:
+            sigma2, p, t = self.sigma2, self.p, self.t
 
-        return np.log(sigma2) + p * np.log(t)/t
-    
-    def inverse(self, x):
+        return np.log(sigma2) + p * np.log(t)/t 
+
+    def inverse(self,x):
         """
         Compute inverse, even for 0 dimentional arrays
         """

@@ -72,7 +72,7 @@ class kalman_filter:
         # Updates error covariance estimate: P_{t|t} = (I-K * H) * P_{t|t-1}
         n = self.H.shape[0]
         Pu = np.dot((np.identity(n) - np.dot(K,self.H)), Pp)        
-        
+
         return xu, Pu
 
     def run(self, y):
