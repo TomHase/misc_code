@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.linalg import norm
 
-def anoldi(A, q1):
+def arnoldi(A, q1):
     # Initialize array
     #from IPython.core.debugger import Tracer; Tracer()()
     k=len(q1)
