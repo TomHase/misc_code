@@ -1,7 +1,7 @@
 """
 filename: kalman_filter.py
 author: Thomas Hasenzagl
-email: thomas.hasenzagl@gmai;.com
+email: thomas.hasenzagl@gmail.com
 date: April, 26 2016
 """
 
