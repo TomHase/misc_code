@@ -8,39 +8,54 @@ date: june 18, 2017
 import numpy as np
 from numpy.linalg import norm
 
-def gmres(A, b, x0, max_iter = 10):
+def gmres(A, b, x0, max_iter = 100000):
 
     n = A.shape[0]
-    tol = 1e-3
-    k = 1
+    tol = 1e-7
+    
+    # Use 2d numpy arrays
+    A = np.array(A).reshape(A.shape[0], -1)
+    b = np.array(b).reshape(b.shape[0], -1)
+    x0 = np.array(x0).reshape(x0.shape[0], -1)
 
     # Initial arrays 
-    q = np.zeros([n, max_iter])
-    H =np. zeros([max_iter+1, max_iter])
-
     R0 = b - np.dot(A, x0)
     beta = norm(R0)
-    error = norm(R0)
+    error = np.zeros(max_iter)
+    error[0] = norm(R0)
 
-    q[:,0] = R0 / norm(R0) 
+    q = R0 / norm(R0) 
 
-    for j in range(max_iter):
-        qj = np.dot(A, q[:,j])
+    for j in range(1, max_iter+1):
+        hj = np.zeros(j+1)
+        qj = np.dot(A, q[:,j-1])
         
         for i in range(j):
-            H[i,j] = np.dot(np.conj(qj.T), q[:,i])
-            qj = qj - np.dot(H[i,j], q[:,i]) 
 
-        if j != max_iter - 1:  
-            H[j+1, j] = norm(qj)
-            q[:,j+1] = qj / H[j+1,j]
+            # Gram-Schmidt orthogonalization 
+            hj[i] = np.dot(np.conj(qj.T), q[:,i])
+            qj = qj - np.dot(hj[i], q[:,i]) 
 
-        e1 = np.hstack([1, np.zeros(max_iter)])
+        hj[-1] = norm(qj)
+        qj = qj / hj[-1] 
+        q = np.hstack([q, qj.reshape(qj.shape[0], -1)])
+
+        if j == 1:
+            H = hj.reshape(hj.shape[0], -1) 
+        else:
+            H = np.vstack([H, np.zeros([1, H.shape[1]])])
+            H = np.hstack([H, hj.reshape(hj.shape[0], -1)])
+        
+        # Minimization
+        e1 = np.hstack([1, np.zeros(j)])
         yk = np.linalg.lstsq(H,beta*e1)[0]
-        x = np.dot(q, yk) + x0
+        x = np.dot(q[:,:j], yk) + x0.T
 
-        error = norm(np.dot(A, x) - beta)
-        if error < tol:
+        error[j] = norm(np.dot(A, x.T) - b)
+        if error[j] < tol:
             break
+    
+    return x, error[:j+1] 
 
-    return x 
+
+
