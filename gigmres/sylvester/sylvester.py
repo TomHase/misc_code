@@ -1,39 +1,80 @@
+"""
+filename: sylvester.py
+author: Thomas Hasenzagl
+email: thomas.hasenzagl@gmail.com
+date: june 18, 2017
+"""
+
 import numpy as np
 from numpy.linalg import norm
 
-def global_arnoldi(A, B, V0, k):
-    # Initialize array
-    # from IPython.core.debugger import Tracer; Tracer()()
-    V = np.zeros([V0.shape[0], V0.shape[1], k+1])
-    H = np.zeros([k+1, k])
-    V0 = V0 / inner_product(V0, V0) 
-
-    V[:,:,0] = V0
+def gigmres(A, B, C, X0 = [], k  = 10, tol = 1e-7):
     
-    for j in range(1, k):
-        Vj = M(A, B, V[:,:,j-1]) 
+    # Dimensions of the arrays
+    n = C.shape[0]
+    p = C.shape[1]
+        
+    # Set X0  
+    if X0 == []:
+        X0 = np.zeros([n,p])
 
-        for i in range(j):
-            Vj = Vj - inner_product(V[:,:,i], Vj) * V[:,:,i] 
-            H[i, j-1] =  inner_product(V[:,:,i], Vj)             
+    # Set iter
+    iter = 0 
 
-        V[:,:,j] = Vj / inner_product(Vj, Vj) 
-        H[j, j-1] = inner_product(Vj, Vj)
+    # Compute R0 
+    R0 = C - sum([np.dot(np.dot(Ai, X0), Bi) for Ai, Bi in zip(A, B)]) 
 
-    return V, H 
+    # Compute beta
+    beta = norm(R0) 
+    epsilon = beta
+    epsilon_array = epsilon
+
+    # Compute V[0]
+    V = [[] for i in range(k+1)]
+    V[0] = R0 / beta 
+
+    while epsilon > tol:
+
+        for j in range(1, k+1):
+            hj = np.zeros(j+1)
+            Vj = sum([np.dot(np.dot(Ai, V[j-1]), Bi) for Ai, Bi in zip(A, B)]) 
+        
+            for i in range(j):
+
+                # Gram-Schmidt orthogonalization 
+                hj[i] = np.trace(np.dot(V[i].T, Vj))
+                Vj = Vj - np.dot(hj[i], V[i]) 
+
+            hj[-1] = norm(Vj) 
+            Vj = Vj / hj[-1] 
+            V[j] = Vj 
+
+            if j == 1:
+                H = hj.reshape(hj.shape[0], -1) 
+            else:
+                H = np.vstack([H, np.zeros([1, H.shape[1]])])
+                H = np.hstack([H, hj.reshape(hj.shape[0], -1)])
+
+        #from IPython.core.debugger import Tracer; Tracer()()
+
+        # Minimization
+        e1 = np.hstack([1, np.zeros(k)])
+        y = np.linalg.lstsq(H,beta*e1)[0]
+        X = np.dot(np.hstack(V[0:-1]), np.kron(y, np.eye(p)).T) + X0
+
+        # Error
+        R = C - sum([np.dot(np.dot(Ai, X), Bi) for Ai, Bi in zip(A, B)]) 
+        epsilon = norm(R)
+        epsilon_array = np.vstack([epsilon_array, epsilon])
+
+        X0 = X
+        R0 = R
+        beta = norm(R0)
+        V[0] = R0 / beta
+        iter += 1
+        print(epsilon)
+
+    return X, iter, epsilon_array 
 
 
-def gigmres(A, B, C, k):
-    iter = 0
-    tol = 1e-8
-    X0 = np.zeros([A[0].shape[0], B[0].shape[0]])
-    R0 = C - M(A, B, X0)
-    beta = inner_product(R0, R0)
-    V1 = R0 / beta
-    return R0, beta, V1
 
-def inner_product(A, B):
-    return np.sqrt(np.trace(np.dot(A.T, B)))
-
-def M(A, B, X):
-    return sum([np.dot(np.dot(Ai,X),Bi) for Ai, Bi in zip(A, B)])
