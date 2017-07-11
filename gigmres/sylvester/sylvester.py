@@ -8,7 +8,7 @@ date: june 18, 2017
 import numpy as np
 from numpy.linalg import norm
 
-def gigmres(A, B, C, X0 = [], k  = 10, tol = 1e-7):
+def gigmres(A, B, C, X0 = [], k  = 1000, tol = 1e-7):
     
     # Dimensions of the arrays
     n = C.shape[0]
@@ -75,6 +75,3 @@ def gigmres(A, B, C, X0 = [], k  = 10, tol = 1e-7):
         print(epsilon)
 
     return X, iter, epsilon_array 
-
-
-
