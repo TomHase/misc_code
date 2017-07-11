@@ -42,9 +42,6 @@ def gigmres(A, B, C, X0 = [], tol = 1e-7):
            hj[i] = np.trace(np.dot(V[i].T, Vj))
            Vj = Vj - np.dot(hj[i], V[i]) 
 
-        #if j==99: 
-        #    from IPython.core.debugger import Tracer; Tracer()()
-
         hj[-1] = norm(Vj) 
         Vj = Vj / hj[-1] 
         V.append(Vj) 
