@@ -50,6 +50,6 @@ B = np.array([[16, 4, 1], [9, 3, 1], [4, 2, 1]])
 C = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 0]])
 
 test_sylvester(A, B, C)
-test_cont_lyapunov(B, C)
+test_cont_lyapunov(A, C)
   
 
