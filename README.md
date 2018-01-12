@@ -1,1 +1,1 @@
-# misc_code written in Python and Julia
+# Miscellaneous code written in python and julia
